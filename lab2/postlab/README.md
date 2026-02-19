@@ -1,6 +1,7 @@
 # How to use `main.c`
 1. Drag and drop `main.c` into `../ble-scanner/src`.
 2. Build + flash onto the nRF52840.
+> For the final analysis, you will want to let the scan run for a while. At least 30 minutes would be ideal.
 3. You should see the following CSV format:
 
 ```
@@ -27,7 +28,7 @@ len,payload
 
 `len` | `payload`
 -- | -
-represents the **length** in bytes, so the hex string is exactly `2 * len` characters, use this for corruption checking | the raw ad payload, you will have to decode it to get the AD types, elements, etc.
+represents the length in **bytes**, so the hex string is exactly `2 * len` characters, use this for corruption checking | the raw ad payload, you will have to decode it to get the AD types, elements, etc.
 
 As for uniqueness, you can probably compute the CRC of the payload. Currently, the program dumps data entries into serial console. You will need to redirect it to a `.csv` file. If serial console is cutting off, add this to `prj.conf`:
 ```

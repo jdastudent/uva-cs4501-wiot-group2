@@ -14,7 +14,7 @@
 
 #define PSDU_MAX_SIZE (127u)
 #define CHECK_PERIOD_TICKS 800 // in ms
-#define RX_WINDOW_TICKS 10 // ~10ms rx window
+#define RX_WINDOW_TICKS 10 // > 8.2 ms = 2 * the duration of a transmission of the longest 802.15.4 packet
 #define STATS_PERIOD_TICKS 15000 // 15 seconds
 
 static volatile bool pkt_recvd = false;

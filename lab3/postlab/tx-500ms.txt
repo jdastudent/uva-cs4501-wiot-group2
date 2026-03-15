@@ -1,0 +1,24 @@
+[00:00:00.435,028] <inf> send: Sending: Group2 Part 0
+[00:00:00.681,335] <inf> send: ACK received - stopping train
+[00:00:00.959,136] <inf> send: Sending: Group2 Part 1
+[00:00:01.176,727] <inf> send: ACK received - stopping train
+[00:00:01.434,326] <inf> send: Sending: Group2 Part 2
+[00:00:01.673,431] <inf> send: ACK received - stopping train
+[00:00:01.941,131] <inf> send: Sending: Group2 Part 3
+[00:00:02.173,065] <inf> send: ACK received - stopping train
+[00:00:02.612,487] <inf> send: Sending: Group2 Part 4
+[00:00:02.672,271] <inf> send: ACK received - stopping train
+[00:00:03.111,633] <inf> send: Sending: Group2 Part 5
+[00:00:03.171,447] <inf> send: ACK received - stopping train
+[00:00:03.792,694] <inf> send: Sending: Group2 Part 6
+[00:00:04.168,090] <inf> send: ACK received - stopping train
+[00:00:04.354,980] <inf> send: Sending: Group2 Part 7
+[00:00:04.665,802] <inf> send: ACK received - stopping train
+[00:00:05.085,021] <inf> send: Sending: Group2 Part 8
+[00:00:05.159,149] <inf> send: ACK received - stopping train
+[00:00:06.770,111] <inf> send: Sending: Group2 Part 9
+[00:00:07.152,709] <inf> send: ACK received - stopping train
+[00:00:15.006,408] <inf> send: [Transmitter Stats] Bursts triggered: 10
+[00:00:15.006,439] <inf> send: [Transmitter Stats] Packets sent:     313
+[00:00:15.006,439] <inf> send: [Transmitter Stats] ACKs received:    10
+[00:00:15.006,469] <inf> send: [Transmitter Stats] ACK miss rate:    0%

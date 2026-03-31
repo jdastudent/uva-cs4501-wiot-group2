@@ -25,13 +25,20 @@ void loop()
     } else {
         Serial.print(n);
         Serial.println(" networks found");
-        Serial.println("Nr | SSID                             | Encryption");
+        // Serial.println("Nr | SSID                             | Encryption");
+        Serial.println("Nr | SSID                             | RSSI | CH | Encryption");
 
         for (int i = 0; i < n; ++i) {
             Serial.printf("%2d",i + 1);
             Serial.print(" | ");
             Serial.printf("%-32.32s", WiFi.SSID(i).c_str());
             Serial.print(" | ");
+            
+            Serial.printf("%4d", WiFi.RSSI(i));
+            Serial.print(" | ");
+            Serial.printf("%2d", WiFi.channel(i));
+            Serial.print(" | ");
+
             switch (WiFi.encryptionType(i))
             {
             case WIFI_AUTH_OPEN:

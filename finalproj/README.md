@@ -9,7 +9,7 @@
 All three boards will be deployed in parallel to the following buildings for 1 to 2 hours:
 - Rice Hall
 - Olsson Hall
-- Thorton Hall (pick busiest representative wing)
+- Thorton Hall (pick busiest representative wing, otherwise collection time explodes by fivefold)
 - Mech Engr Bldg
 - Jesser Hall
 - Chem Engr Bldg
@@ -19,7 +19,7 @@ All three boards will be deployed in parallel to the following buildings for 1 t
 - Life Sciences Bldg
 - Gilmer Hall
 - APMA Small Hall
-- AFC (extra
+- AFC (extra, if we have more time)
 
 All of these buildings are located around or in UVA's main STEM corridor:
 <img width="868" height="723" alt="image" src="https://github.com/user-attachments/assets/49c9ec0a-53e8-4b6b-b89d-603017627447" />

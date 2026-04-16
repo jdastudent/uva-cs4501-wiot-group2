@@ -1,4 +1,9 @@
 # CS 4501 Final Project
+## Instructions for Heltec code:
+1. Use the `lab6/LoRaWAN` project.
+2. Add `BLEDeviceScanner.h` to the `include` folder, and `BLEDeviceScanner.cpp` to the `src` folder.
+3. Replace `main.cpp` with your own device parameters that *The Things Network* gives you.
+
 ### General high-level data flow procedure:
 1. Collect device info seen as BLE ads. Ignore any non-personal devices such as TVs, projectors, smart appliances, etc. but keep data for laptops, wearables, mobile devices, etc.
 2. Send data aggregates (along with possible control info) to *The Things Network* over LoRaWAN.

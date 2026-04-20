@@ -2,10 +2,10 @@
 #include <Arduino.h>
 #include "BLEDeviceScanner.h"
 
-uint8_t devEui[] = {0x70, 0xB3, 0xD5, 0x7E, 0xD0, 0x07, 0x68, 0x07};  
+uint8_t devEui[] = {};  
 bool overTheAirActivation = true;
-uint8_t appEui[] = {0xA8, 0xBA, 0x87, 0xBE, 0xDA, 0xEF, 0xB8, 0xA8};  // you should set whatever your TTN generates. TTN calls this the joinEUI, they are the same thing. 
-uint8_t appKey[] = {0x8D, 0xCF, 0x5A, 0x0B, 0x40, 0x24, 0x04, 0x15, 0x5C, 0x19, 0xB3, 0x39, 0x3B, 0x2D, 0x8B, 0xAB};  // you should set whatever your TTN generates 
+uint8_t appEui[] = {};  // you should set whatever your TTN generates. TTN calls this the joinEUI, they are the same thing. 
+uint8_t appKey[] = {};  // you should set whatever your TTN generates 
 
 //These are only used for ABP, for OTAA, these values are generated on the Nwk Server, you should not have to change these values
 uint8_t nwkSKey[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
@@ -56,6 +56,8 @@ uint8_t appPort = 1;
 */
 uint8_t confirmedNbTrials = 8;
 
+BLEDeviceScanner scanner;
+
 /* Prepares the payload of the frame */
 static void prepareTxFrame( uint8_t port )
 {
@@ -67,19 +69,87 @@ static void prepareTxFrame( uint8_t port )
 	*the max value for different DR can be found in MaxPayloadOfDatarateCN470 refer to DataratesCN470 and BandwidthsCN470 in "RegionCN470.h".
 	*/
     // This data can be changed, just make sure to change the datasize as well. 
-    appDataSize = 4;
-    appData[0] = 0x00;
-    appData[1] = 0x00;
-    appData[2] = 0x00;
-    appData[3] = 0x01;
+	Summary results = scanner.getStats(SCAN_DURATION);
+	unsigned short total = results.apples + results.microsofts + results.samsungs + results.others;
+	Serial.printf("\nscanned for %d secs @ %d%% duty cycle, found %d likely personal devices:\n", SCAN_DURATION, SCAN_DUTY_CYCLE, total);
+	Serial.printf("\tlaptops: %hu\n", results.laptops);
+	Serial.printf("\tmobile devices: %hu\n", results.mobiles);
+	Serial.printf("\twearables: %hu\n", results.wearables);
+	Serial.printf("\tunknown: %hu\n", results.unknowns);
+
+	Serial.println("suspected manufacturers:");
+	Serial.printf("\tApple: %hu\n", results.apples);
+	Serial.printf("\tMicrosoft: %hu\n", results.microsofts);
+	Serial.printf("\tSamsung: %hu\n", results.samsungs);
+	Serial.printf("\tGoogle: %hu\n", results.googles);
+	Serial.printf("\tothers: %hu\n\n", results.others);
+
+    appData[0] = 'M';
+    appData[1] = (results.mobiles >> 8) & 0xFF;
+    appData[2] = results.mobiles & 0xFF;
+
+    appData[3] = 'L';
+	appData[4] = (results.laptops >> 8) & 0xFF;
+    appData[5] = results.laptops & 0xFF;
+
+    appData[6] = 'W';
+	appData[7] = (results.wearables >> 8) & 0xFF;
+    appData[8] = results.wearables & 0xFF;
+
+	appData[9] = 'U';
+	appData[10] = (results.unknowns >> 8) & 0xFF;
+    appData[11] = results.unknowns & 0xFF;
+
+	appData[12] = 'A';
+	appData[13] = 'A';
+    appData[14] = 'P';
+	appData[15] = 'L';
+	appData[16] = (results.apples >> 8) & 0xFF;
+    appData[17] = results.apples & 0xFF;
+
+	appData[18] = 'G';
+	appData[19] = 'O';
+    appData[20] = 'O';
+	appData[21] = 'G';
+	appData[22] = (results.googles >> 8) & 0xFF;
+    appData[23] = results.googles & 0xFF;
+
+	appData[24] = 'M';
+	appData[25] = 'S';
+    appData[26] = 'F';
+	appData[27] = 'T';
+	appData[28] = (results.microsofts >> 8) & 0xFF;
+    appData[29] = results.microsofts & 0xFF;
+
+	appData[30] = 'S';
+	appData[31] = 'M';
+    appData[32] = 'S';
+	appData[33] = 'G';
+	appData[34] = (results.samsungs >> 8) & 0xFF;
+    appData[35] = results.samsungs & 0xFF;
+
+	appData[36] = 'O';
+	appData[37] = 'T';
+    appData[38] = 'H';
+	appData[39] = 'E';
+	appData[40] = 'R';
+	appData[41] = (results.others >> 8) & 0xFF;
+    appData[42] = results.others & 0xFF;
+
+	// edit location name here
+	appData[43] = 'R';
+	appData[44] = 'I';
+	appData[45] = 'C';
+	appData[46] = 'E';
+
+	appDataSize = 47;
 }
 
 RTC_DATA_ATTR bool firstrun = true;
 
-BLEDeviceScanner scanner;
-
 void setup() 
 {
+
 	Serial.begin(115200);
 	Mcu.begin();
 
@@ -95,19 +165,6 @@ void setup()
 
 void loop()
 {
-	std::vector<PersonalDevice> foundDevices = scanner.scan(1);
-    
-    Serial.printf("Found %d suspected personal devices:\n", foundDevices.size());
-    Serial.println("-------------------------------------------------");
-    
-    for (const auto& device : foundDevices) {
-        Serial.printf("MAC: %s | RSSI: %4d | Mfg: %-25s | Name: %s\n", 
-                      device.mac.c_str(), 
-                      device.rssi, 
-                      device.manufacturer.c_str(),
-                      device.name.c_str());
-    }
-
 	switch( deviceState )
 	{
 		case DEVICE_STATE_INIT:

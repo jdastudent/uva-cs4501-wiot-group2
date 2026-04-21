@@ -68,10 +68,9 @@ static void prepareTxFrame( uint8_t port )
 	*for example, if use REGION_CN470, 
 	*the max value for different DR can be found in MaxPayloadOfDatarateCN470 refer to DataratesCN470 and BandwidthsCN470 in "RegionCN470.h".
 	*/
-    // This data can be changed, just make sure to change the datasize as well. 
+    // This data can be changed, just make sure to change the datasize as well.
 	Summary results = scanner.getStats(SCAN_DURATION);
-	unsigned short total = results.apples + results.microsofts + results.samsungs + results.others;
-	Serial.printf("\nscanned for %d secs @ %d%% duty cycle, found %d likely personal devices:\n", SCAN_DURATION, SCAN_DUTY_CYCLE, total);
+	Serial.printf("\nscanned for %d secs @ %d%% duty cycle, found %d devices (%d personal):\n", SCAN_DURATION, SCAN_DUTY_CYCLE, results.total, results.personal);
 	Serial.printf("\tlaptops: %hu\n", results.laptops);
 	Serial.printf("\tmobile devices: %hu\n", results.mobiles);
 	Serial.printf("\twearables: %hu\n", results.wearables);
@@ -84,65 +83,35 @@ static void prepareTxFrame( uint8_t port )
 	Serial.printf("\tGoogle: %hu\n", results.googles);
 	Serial.printf("\tothers: %hu\n\n", results.others);
 
-    appData[0] = 'M';
-    appData[1] = (results.mobiles >> 8) & 0xFF;
-    appData[2] = results.mobiles & 0xFF;
+	int i = 0;
+	appData[i++] = (results.total >> 8) & 0xFF;
+	appData[i++] = results.total & 0xFF;
+	appData[i++] = (results.personal >> 8) & 0xFF;
+	appData[i++] = results.personal & 0xFF;
+	appData[i++] = (results.mobiles >> 8) & 0xFF;
+	appData[i++] = results.mobiles & 0xFF;
+	appData[i++] = (results.laptops >> 8) & 0xFF;
+	appData[i++] = results.laptops & 0xFF;
+	appData[i++] = (results.wearables >> 8) & 0xFF;
+	appData[i++] = results.wearables & 0xFF;
+	appData[i++] = (results.unknowns >> 8) & 0xFF;
+	appData[i++] = results.unknowns & 0xFF;
+	appData[i++] = (results.apples >> 8) & 0xFF;
+	appData[i++] = results.apples & 0xFF;
+	appData[i++] = (results.googles >> 8) & 0xFF;
+	appData[i++] = results.googles & 0xFF;
+	appData[i++] = (results.microsofts >> 8) & 0xFF;
+	appData[i++] = results.microsofts & 0xFF;
+	appData[i++] = (results.samsungs >> 8) & 0xFF;
+	appData[i++] = results.samsungs & 0xFF;
+	appData[i++] = LOCATION_ID;
 
-    appData[3] = 'L';
-	appData[4] = (results.laptops >> 8) & 0xFF;
-    appData[5] = results.laptops & 0xFF;
+	uint8_t checksum = 0;
+	for (int j = 0; j < i; j++)
+		checksum ^= appData[j];
+	appData[i++] = checksum;
 
-    appData[6] = 'W';
-	appData[7] = (results.wearables >> 8) & 0xFF;
-    appData[8] = results.wearables & 0xFF;
-
-	appData[9] = 'U';
-	appData[10] = (results.unknowns >> 8) & 0xFF;
-    appData[11] = results.unknowns & 0xFF;
-
-	appData[12] = 'A';
-	appData[13] = 'A';
-    appData[14] = 'P';
-	appData[15] = 'L';
-	appData[16] = (results.apples >> 8) & 0xFF;
-    appData[17] = results.apples & 0xFF;
-
-	appData[18] = 'G';
-	appData[19] = 'O';
-    appData[20] = 'O';
-	appData[21] = 'G';
-	appData[22] = (results.googles >> 8) & 0xFF;
-    appData[23] = results.googles & 0xFF;
-
-	appData[24] = 'M';
-	appData[25] = 'S';
-    appData[26] = 'F';
-	appData[27] = 'T';
-	appData[28] = (results.microsofts >> 8) & 0xFF;
-    appData[29] = results.microsofts & 0xFF;
-
-	appData[30] = 'S';
-	appData[31] = 'M';
-    appData[32] = 'S';
-	appData[33] = 'G';
-	appData[34] = (results.samsungs >> 8) & 0xFF;
-    appData[35] = results.samsungs & 0xFF;
-
-	appData[36] = 'O';
-	appData[37] = 'T';
-    appData[38] = 'H';
-	appData[39] = 'E';
-	appData[40] = 'R';
-	appData[41] = (results.others >> 8) & 0xFF;
-    appData[42] = results.others & 0xFF;
-
-	// edit location name here
-	appData[43] = 'R';
-	appData[44] = 'I';
-	appData[45] = 'C';
-	appData[46] = 'E';
-
-	appDataSize = 47;
+	appDataSize = i;
 }
 
 RTC_DATA_ATTR bool firstrun = true;

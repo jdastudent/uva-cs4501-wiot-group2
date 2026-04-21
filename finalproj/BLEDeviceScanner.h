@@ -11,6 +11,8 @@
 #define SCAN_DUTY_CYCLE 99 // % of scanning interval taken by scanning window
 
 struct Summary {
+    unsigned short total;      // all devices detected
+    unsigned short personal;   // devices that passed filter
     unsigned short mobiles;
     unsigned short laptops;
     unsigned short wearables;
@@ -22,6 +24,9 @@ struct Summary {
     unsigned short samsungs;
     unsigned short others;
 };
+
+// Location ID -- change per deployment
+#define LOCATION_ID 0x01  // 0x01=Rice Hall, 0x02=Olsson, 0x03=Thornton, etc.
 
 class BLEDeviceScanner
 {

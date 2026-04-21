@@ -11,7 +11,7 @@ void BLEDeviceScanner::begin()
     pBLEScan->setWindow(SCAN_DUTY_CYCLE); // High duty cycle for better detection
 }
 
-Summary BLEDeviceScanner::getStats(uint32_t duration_secs) 
+Summary BLEDeviceScanner::getStats(uint32_t duration_secs)
 {
     Summary results = { 0 }; // all members start initialized 0
     if (pBLEScan == nullptr)
@@ -19,12 +19,16 @@ Summary BLEDeviceScanner::getStats(uint32_t duration_secs)
 
     BLEScanResults found_devices = pBLEScan->start(duration_secs, false);
 
+    results.total = found_devices.getCount();
+
     for (int i = 0; i < found_devices.getCount(); i++) {
         BLEAdvertisedDevice device = found_devices.getDevice(i);
 
         Manufacturer manufacturer_name;
         DeviceType type;
         if (isLikelyPersonalDevice(&device, manufacturer_name, type)) {
+            results.personal++;
+
             switch (manufacturer_name) {
                 case Manufacturer::APPLE:
                     results.apples++;
@@ -62,7 +66,7 @@ Summary BLEDeviceScanner::getStats(uint32_t duration_secs)
     return results;
 }
 
-static std::string toLower(const std::string &str) 
+static std::string toLower(const std::string &str)
 {
     std::string lower_str = str;
     std::transform(lower_str.begin(), lower_str.end(), lower_str.begin(), ::tolower);
@@ -71,7 +75,7 @@ static std::string toLower(const std::string &str)
 
 static double getShannonEntropy(const std::string& data)
 {
-    if (data.empty()) 
+    if (data.empty())
         return 0.0;
 
     std::array<int, 256> freq = {0};
@@ -80,7 +84,7 @@ static double getShannonEntropy(const std::string& data)
 
     double entropy = 0.0;
     for (int i = 0; i < 256; i++) {
-        if (!freq[i]) 
+        if (!freq[i])
             continue;
 
         double p = (double)freq[i] / data.size();
@@ -90,19 +94,19 @@ static double getShannonEntropy(const std::string& data)
     return entropy;
 }
 
-bool BLEDeviceScanner::isLikelyPersonalDevice(BLEAdvertisedDevice *device, Manufacturer &out_manu, DeviceType &out_type) 
+bool BLEDeviceScanner::isLikelyPersonalDevice(BLEAdvertisedDevice *device, Manufacturer &out_manu, DeviceType &out_type)
 {
     // default assumptions
     out_manu = Manufacturer::OTHER;
     out_type = DeviceType::UNKNOWN;
-    
+
     if (device->haveName()) {
         const std::vector<std::string> blocklist = {
-            "tv", "television", "lg", "webos", "roku", "chromecast", "fire", 
-            "speaker", "soundbar", "sonos", "fridge", "washer", "dryer", 
+            "tv", "television", "webos", "roku", "chromecast", "fire",
+            "speaker", "soundbar", "sonos", "fridge", "washer", "dryer",
             "oven", "hue", "bulb", "lamp", "light", "govee", "vacuum", "robot"
         };
-        
+
         std::string lower_name = toLower(device->getName());
         for (const auto& keyword : blocklist)
             if (lower_name.find(keyword) != std::string::npos)
@@ -122,7 +126,7 @@ bool BLEDeviceScanner::isLikelyPersonalDevice(BLEAdvertisedDevice *device, Manuf
 
     if (device->haveServiceUUID()) {
         BLEUUID uuid = device->getServiceUUID();
-        
+
         // 0xFD6F is the Google Exposure Notification system
         if (uuid.equals(BLEUUID((uint16_t)0xFD6F))) {
             out_manu = Manufacturer::GOOGLE;
@@ -167,5 +171,6 @@ bool BLEDeviceScanner::isLikelyPersonalDevice(BLEAdvertisedDevice *device, Manuf
         }
     }
 
-    return false; 
+    // device passed blocklist w/ no manufacturer, but could be relevant device
+    return true;
 }

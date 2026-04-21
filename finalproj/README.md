@@ -6,9 +6,10 @@
 
 ### General high-level data flow procedure:
 1. Collect device info seen as BLE ads. Ignore any non-personal devices such as TVs, projectors, smart appliances, etc. but keep data for laptops, wearables, mobile devices, etc.
-2. Send data aggregates (along with possible control info) to *The Things Network* over LoRaWAN.
-3. If # of personal devices exceeds fire code (defined as a constant), send an alert to backend over *The Things Network*.
-4. Display a frontend website of the collected stats, along with a live panel of incoming alerts.
+2. Edit config in `BLEDeviceScanner.h`
+3. Send data aggregates (along with possible control info) to *The Things Network* over LoRaWAN.
+4. If # of personal devices exceeds fire code (defined as a constant), send an alert to backend over *The Things Network*.
+5. Display a frontend website of the collected stats, along with a live panel of incoming alerts.
 
 ### Data sampling process:
 All three boards will be deployed in parallel to the following buildings for 1 to 2 hours:

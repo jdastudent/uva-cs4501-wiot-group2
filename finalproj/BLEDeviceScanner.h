@@ -7,6 +7,23 @@
 #include <vector>
 #include <string>
 
+// Location ID -- change per deployment
+/*
+    0x1 = Rice Hall
+    0x2 = Olsson Hall
+    0x3 = Thornton Hall
+    0x4 = Mech Engr Bldg
+    0x5 = Jesser Hall
+    0x6 = Chem Engr Bldg
+    0x7 = Wilsdorf Hall
+    0x8 = Physics Bldg
+    0x9 = Chem Bldg
+    0xA = Life Sciences Bldg
+    0xB = Gilmer Hall
+    0xC = APMA Small Hall
+    0xD = AFC
+*/
+#define LOCATION_ID 0x1
 #define SCAN_DURATION 3 // in seconds, how long to scan for ads
 #define SCAN_DUTY_CYCLE 99 // % of scanning interval taken by scanning window
 
@@ -24,9 +41,6 @@ struct Summary {
     unsigned short samsungs;
     unsigned short others;
 };
-
-// Location ID -- change per deployment
-#define LOCATION_ID 0x01  // 0x01=Rice Hall, 0x02=Olsson, 0x03=Thornton, etc.
 
 class BLEDeviceScanner
 {

@@ -18,11 +18,18 @@ Summary BLEDeviceScanner::getStats(uint32_t duration_secs)
         return results;
 
     BLEScanResults found_devices = pBLEScan->start(duration_secs, false);
-
     results.total = found_devices.getCount();
+    std::vector<std::string> seen;
 
     for (int i = 0; i < found_devices.getCount(); i++) {
         BLEAdvertisedDevice device = found_devices.getDevice(i);
+
+        auto mac = device.getAddress().toString();
+        auto it = std::find(seen.begin(), seen.end(), mac);
+        if (it == seen.end()) // mac not seen
+            seen.push_back(mac);
+        else // mac seen
+            continue;
 
         Manufacturer manufacturer_name;
         DeviceType type;

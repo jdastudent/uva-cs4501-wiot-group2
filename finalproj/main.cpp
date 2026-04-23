@@ -118,7 +118,6 @@ RTC_DATA_ATTR bool firstrun = true;
 
 void setup() 
 {
-
 	Serial.begin(115200);
 	Mcu.begin();
 
@@ -142,6 +141,13 @@ void loop()
 			LoRaWAN.generateDeveuiByChipID();
 #endif
 			LoRaWAN.init(loraWanClass,loraWanRegion);
+
+			// force data rate 1 to send >11B
+			MibRequestConfirm_t mibReq;
+			mibReq.Type = MIB_CHANNELS_DATARATE;
+			mibReq.Param.ChannelsDatarate = DR_1;
+			LoRaMacMibSetRequestConfirm(&mibReq);
+
 			break;
 		}
 		case DEVICE_STATE_JOIN:

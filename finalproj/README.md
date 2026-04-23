@@ -3,6 +3,7 @@
 1. Use the `lab6/LoRaWAN` project.
 2. Add `BLEDeviceScanner.h` to the `include` folder, and `BLEDeviceScanner.cpp` to the `src` folder.
 3. Replace `main.cpp` with your own device parameters that *The Things Network* gives you.
+4. In `BLEDeviceScanner.h`, the macros that relate to scan duration and duty cycle.
 
 ### General high-level data flow procedure:
 1. Collect device info seen as BLE ads. Ignore any non-personal devices such as TVs, projectors, smart appliances, etc. but keep data for laptops, wearables, mobile devices, etc.

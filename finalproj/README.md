@@ -31,6 +31,21 @@ All three boards will be deployed in parallel to the following buildings for 1 t
 All of these buildings are located around or in UVA's main STEM corridor:
 <img width="868" height="723" alt="image" src="https://github.com/user-attachments/assets/49c9ec0a-53e8-4b6b-b89d-603017627447" />
 
+### Data Format
+Size refers to bytes.
+Offset  Size  Field
+0-1     2     total devices
+2-3     2     personal devices
+4-5     2     mobiles
+6-7     2     laptops
+8-9     2     wearables
+10-11   2     unknowns
+12-13   2     apples
+14-15   2     googles
+16-17   2     microsofts
+18-19   2     samsungs
+20      1     location_id
+21      1     XOR checksum
 
 ### Other things to consider:
 - get research on devices per person

@@ -40,7 +40,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let pool = Arc::new(
         SqlitePoolOptions::new()
             .max_connections(5)
-            .connect("sqlite://database.db")
+            .connect("sqlite://test.db")
             .await
             .expect("Database file exists"),
     );

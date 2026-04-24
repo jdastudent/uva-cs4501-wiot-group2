@@ -15,7 +15,7 @@ const LOCATIONS: &[(u8, &'static str)] = &[
     (0xa, "Life Sciences Bldg"),
     (0xb, "Gilmer Hall"),
     (0xc, "APMA Small Hall"),
-    (0xc, "AFC"),
+    (0xd, "AFC"),
 ];
 
 pub async fn init_db(pool: &Pool<Sqlite>) {

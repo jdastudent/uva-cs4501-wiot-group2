@@ -23,8 +23,8 @@
     0xC = APMA Small Hall
     0xD = AFC
 */
-#define LOCATION_ID 0x1
-#define SCAN_DURATION 3 // in seconds, how long to scan for ads
+#define LOCATION_ID 0x6
+#define SCAN_DURATION 10 // in seconds, how long to scan for ads
 #define SCAN_DUTY_CYCLE 99 // % of scanning interval taken by scanning window
 
 struct Summary {

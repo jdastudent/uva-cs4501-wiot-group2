@@ -155,12 +155,28 @@ bool BLEDeviceScanner::isLikelyPersonalDevice(BLEAdvertisedDevice *device, Manuf
         if (md.length() >= 2) {
             uint16_t company_id = (md[1] << 8) | md[0];
             switch (company_id) {
-                case 0x4C:
+                case 0x4C: // Apple
                     out_manu = Manufacturer::APPLE;
-                    if (md.size() > 20 || getShannonEntropy(md) > 3)
-                        out_type = DeviceType::MOBILE; // iPhones tend to have more complex data
-                    else
-                        out_type = DeviceType::LAPTOP; // Macs tend to have simpler and shorter data
+                    
+                    if (md.length() >= 3) {
+                        uint8_t apple_subtype = md[2];
+
+                        if (apple_subtype == 0x0C || apple_subtype == 0x12) {
+                            out_type = DeviceType::MOBILE;
+                        } 
+                        else if (apple_subtype == 0x07) {
+                            out_type = DeviceType::WEARABLE;
+                        }
+                        else if (apple_subtype == 0x09 || md.size() > 25) {
+                            out_type = DeviceType::LAPTOP;
+                        }
+                        // fallback?
+                        else {
+                            out_type = DeviceType::MOBILE; // more likely to be phone?
+                        }
+                    } else {
+                        out_type = DeviceType::UNKNOWN;
+                    }
                     return true;
                 case 0x06:
                     out_manu = Manufacturer::MICROSOFT;

@@ -25,7 +25,7 @@
 */
 #define LOCATION_ID 0x6
 #define SCAN_DURATION 10 // in seconds, how long to scan for ads
-#define SCAN_DUTY_CYCLE 99 // % of scanning interval taken by scanning window
+#define SCAN_DUTY_CYCLE 97 // % of scanning interval taken by scanning window
 
 struct Summary {
     unsigned short total;      // all devices detected

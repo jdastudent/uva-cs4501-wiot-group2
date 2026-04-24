@@ -2,10 +2,10 @@
 #include <Arduino.h>
 #include "BLEDeviceScanner.h"
 
-uint8_t devEui[] = {};  
+uint8_t devEui[] = {0x70, 0xB3, 0xD5, 0x7E, 0xD0, 0x07, 0x68, 0x0A};  
 bool overTheAirActivation = true;
-uint8_t appEui[] = {};  // you should set whatever your TTN generates. TTN calls this the joinEUI, they are the same thing. 
-uint8_t appKey[] = {};  // you should set whatever your TTN generates 
+uint8_t appEui[] = {0xA8, 0xBA, 0x87, 0xBE, 0xDA, 0xEF, 0xB8, 0xA8 };  // you should set whatever your TTN generates. TTN calls this the joinEUI, they are the same thing. 
+uint8_t appKey[] = {0x49, 0x8A, 0x6A, 0x06, 0x5C, 0xE8, 0x87, 0x85, 0x2D, 0x69, 0x48, 0xE3, 0xCE, 0x37, 0xF2, 0xDF, };  // you should set whatever your TTN generates 
 
 //These are only used for ABP, for OTAA, these values are generated on the Nwk Server, you should not have to change these values
 uint8_t nwkSKey[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};

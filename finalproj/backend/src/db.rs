@@ -66,14 +66,14 @@ pub async fn init_db(pool: &Pool<Sqlite>) {
 
 pub async fn insert_db(data: AppMessage, device_id: String, timestamp: i64, pool: &Pool<Sqlite>) {
     let id:i64 = sqlx::query_scalar(
-        "INSERT INTO devices (device_name) VALUES ($1) ON CONFLICT (device_name) DO NOTHING RETURNING id",
+        r#"INSERT INTO devices (device_name) VALUES ($1) ON CONFLICT (device_name) DO UPDATE SET device_name = EXCLUDED.device_name RETURNING device_id"#,
     )
     .bind(device_id)
     .fetch_one(pool)
     .await.unwrap();
 
     sqlx::query(
-        "INSERT INTO data
+        r#"INSERT INTO data
         (total,
          personal,
          mobiles,
@@ -87,7 +87,7 @@ pub async fn insert_db(data: AppMessage, device_id: String, timestamp: i64, pool
          location_id,
          device_id,
          time)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12 $13)",
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)"#,
     )
     .bind(data.total_devices)
     .bind(data.personal_devices)

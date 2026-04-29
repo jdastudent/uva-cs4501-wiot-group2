@@ -1,12 +1,11 @@
 use nom::{
-    bytes::complete::take,
-    number::{be_u16, u16, u8, Endianness::Big},
+    number::{be_u16, u8},
     IResult, Parser,
 };
 
 use crate::AppMessage;
 
-pub fn parse_app_message(i: &[u8]) -> IResult<&[u8], AppMessage> {
+pub(crate) fn parse_app_message(i: &[u8]) -> IResult<&[u8], AppMessage> {
     let (rest, total_devices) = be_u16().parse(i)?;
     let (rest, personal_devices) = be_u16().parse(rest)?;
     let (rest, mobile_devices) = be_u16().parse(rest)?;

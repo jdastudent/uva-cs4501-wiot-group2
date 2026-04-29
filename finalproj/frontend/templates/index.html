@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Wireless IoT Dashboard</title>
+    <meta name="theme-color" content="#0f172a">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <main class="page-shell">
+        <nav class="top-nav">
+            <a href="/" aria-current="page">Dashboard</a>
+            <a href="/live">Live Monitor</a>
+        </nav>
+
+        <section class="hero hero-panel">
+            <div class="hero-copy">
+                <p class="eyebrow">UVA Wireless IoT Monitor</p>
+                <h1>Campus device activity across UVA, presented as an operations dashboard.</h1>
+                <p class="lede">
+                    Filter historical captures by building or device, inspect the latest stored
+                    readings, and move into the live view when you need a tighter location-specific
+                    feed.
+                </p>
+                <div class="hero-badges">
+                    <span class="hero-badge">Rust + Axum</span>
+                    <span class="hero-badge">SQLite-backed telemetry</span>
+                    <span class="hero-badge">Building-level monitoring</span>
+                </div>
+            </div>
+            <form class="filter-panel" method="get" action="/">
+                <div class="filter-panel-header">
+                    <p class="eyebrow">Filter Records</p>
+                    <h2>Refine the dataset</h2>
+                </div>
+                <label>
+                    <span>Location</span>
+                    <select name="location_id">
+                        <option value="">All locations</option>
+                        {% for location in page.locations %}
+                        <option value="{{ location.location_id }}"{% if location.selected %} selected{% endif %}>
+                            {{ location.location_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </label>
+
+                <label>
+                    <span>Device Name</span>
+                    <input
+                        type="text"
+                        name="device_name"
+                        value="{{ page.filters.selected_device_name }}"
+                        placeholder="eui-70b3d57ed..."
+                    >
+                </label>
+
+                <label>
+                    <span>Rows</span>
+                    <input type="number" name="limit" min="1" max="250" value="{{ page.filters.limit }}">
+                </label>
+
+                <div class="filter-actions">
+                    <button type="submit">Apply Filters</button>
+                    <a href="/">Reset</a>
+                </div>
+            </form>
+        </section>
+
+        <section class="summary-grid">
+            <article class="summary-card">
+                <span class="summary-label">Matching Samples</span>
+                <strong>{{ page.summary.sample_count }}</strong>
+                <p class="summary-note">Total stored rows matching the current filter set.</p>
+            </article>
+            <article class="summary-card">
+                <span class="summary-label">Average Total Devices</span>
+                <strong>{{ page.summary.avg_total }}</strong>
+                <p class="summary-note">Mean observed count across the selected records.</p>
+            </article>
+            <article class="summary-card">
+                <span class="summary-label">Peak Total Devices</span>
+                <strong>{{ page.summary.max_total }}</strong>
+                <p class="summary-note">Highest total device reading in the filtered sample.</p>
+            </article>
+            <article class="summary-card">
+                <span class="summary-label">Latest Matching Sample</span>
+                <strong>{{ page.summary.latest_seen }}</strong>
+                <p class="summary-note">Most recent capture time after filters are applied.</p>
+            </article>
+        </section>
+
+        <section class="content-grid">
+            <section class="panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">Recent Records</p>
+                        <h2>Filtered capture log</h2>
+                    </div>
+                    <p class="panel-copy">Sorted newest-first from the SQLite event store.</p>
+                </div>
+
+                {% if page.records | length > 0 %}
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Location</th>
+                                <th>Device</th>
+                                <th>Total</th>
+                                <th>Personal</th>
+                                <th>Mobile</th>
+                                <th>Laptops</th>
+                                <th>Wearables</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in page.records %}
+                            <tr>
+                                <td>{{ record.captured_at }}</td>
+                                <td>{{ record.location_name }}</td>
+                                <td class="device-name">{{ record.device_name }}</td>
+                                <td>{{ record.total }}</td>
+                                <td>{{ record.personal }}</td>
+                                <td>{{ record.mobiles }}</td>
+                                <td>{{ record.laptops }}</td>
+                                <td>{{ record.wearables }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="empty-state">No rows matched the current filters.</p>
+                {% endif %}
+            </section>
+
+            <aside class="panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">Latest By Building</p>
+                        <h2>Current building snapshots</h2>
+                    </div>
+                    <p class="panel-copy">One most-recent reading per seeded campus location.</p>
+                </div>
+
+                {% if page.location_snapshots | length > 0 %}
+                <div class="snapshot-list">
+                    {% for snapshot in page.location_snapshots %}
+                    <article class="snapshot-card">
+                        <div class="snapshot-topline">
+                            <h3>{{ snapshot.location_name }}</h3>
+                            <span>{{ snapshot.captured_at }}</span>
+                        </div>
+                        <div class="snapshot-metrics">
+                            <div>
+                                <span>Total</span>
+                                <strong>{{ snapshot.total }}</strong>
+                            </div>
+                            <div>
+                                <span>Personal</span>
+                                <strong>{{ snapshot.personal }}</strong>
+                            </div>
+                            <div>
+                                <span>Mobile</span>
+                                <strong>{{ snapshot.mobiles }}</strong>
+                            </div>
+                            <div>
+                                <span>Laptops</span>
+                                <strong>{{ snapshot.laptops }}</strong>
+                            </div>
+                            <div>
+                                <span>Wearables</span>
+                                <strong>{{ snapshot.wearables }}</strong>
+                            </div>
+                        </div>
+                    </article>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="empty-state">No location snapshots have been stored yet.</p>
+                {% endif %}
+            </aside>
+        </section>
+    </main>
+</body>
+</html>

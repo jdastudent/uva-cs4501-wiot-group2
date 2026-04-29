@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Live Location Monitor</title>
+    <meta name="theme-color" content="#0f172a">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <main class="page-shell">
+        <nav class="top-nav">
+            <a href="/">Dashboard</a>
+            <a href="/live" aria-current="page">Live Monitor</a>
+        </nav>
+
+        <section class="hero hero-panel live-hero">
+            <div class="hero-copy">
+                <p class="eyebrow">Live Location Feed</p>
+                <h1>{{ page.selected_location_name }} activity in near real time.</h1>
+                <p class="lede">
+                    Watch the latest sample for a selected building and track how recent counts move
+                    over time without leaving the page.
+                </p>
+                <div class="hero-badges">
+                    <span class="hero-badge">15 second polling</span>
+                    <span class="hero-badge">Five-series trendline</span>
+                    <span class="hero-badge">Location-specific view</span>
+                </div>
+            </div>
+
+            <form class="filter-panel" method="get" action="/live">
+                <div class="filter-panel-header">
+                    <p class="eyebrow">Live View Control</p>
+                    <h2>Select a location</h2>
+                </div>
+                <label>
+                    <span>Location</span>
+                    <select name="location_id" onchange="this.form.submit()">
+                        {% for location in page.locations %}
+                        <option value="{{ location.location_id }}"{% if location.selected %} selected{% endif %}>
+                            {{ location.location_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </label>
+
+                <div class="filter-actions">
+                    <button type="submit">Load Location</button>
+                    <a href="/">Back to Dashboard</a>
+                </div>
+            </form>
+        </section>
+
+        <section class="summary-grid live-summary-grid" id="live-metrics">
+            <article class="summary-card">
+                <span class="summary-label">Latest Total</span>
+                <strong data-field="total">
+                    {% if page.latest_sample %}{{ page.latest_sample.total }}{% else %}--{% endif %}
+                </strong>
+                <p class="summary-note">Most recent device total reported for this building.</p>
+            </article>
+            <article class="summary-card">
+                <span class="summary-label">Personal Devices</span>
+                <strong data-field="personal">
+                    {% if page.latest_sample %}{{ page.latest_sample.personal }}{% else %}--{% endif %}
+                </strong>
+                <p class="summary-note">Personal-device estimate from the latest capture.</p>
+            </article>
+            <article class="summary-card">
+                <span class="summary-label">Latest Device Reporter</span>
+                <strong class="summary-copy" data-field="device_name">
+                    {% if page.latest_sample %}{{ page.latest_sample.device_name }}{% else %}No data{% endif %}
+                </strong>
+                <p class="summary-note">The LoRa endpoint that sent the active sample.</p>
+            </article>
+            <article class="summary-card">
+                <span class="summary-label">Last Updated</span>
+                <strong class="summary-copy" data-field="captured_at">
+                    {% if page.latest_sample %}{{ page.latest_sample.captured_at }}{% else %}No data yet{% endif %}
+                </strong>
+                <p class="summary-note">Timestamp of the latest stored reading for this location.</p>
+            </article>
+        </section>
+
+        <section class="content-grid live-content-grid">
+            <section class="panel live-chart-panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">Recent Trend</p>
+                        <h2>{{ page.selected_location_name }}</h2>
+                    </div>
+                    <p class="chart-status" id="chart-status">Polling every 15 seconds.</p>
+                </div>
+
+                <div class="chart-shell">
+                    <svg id="history-chart" class="history-chart" viewBox="0 0 760 320" role="img" aria-label="Recent device counts by time"></svg>
+                    <div class="chart-legend">
+                        <span><i class="legend-swatch total-line"></i>Total</span>
+                        <span><i class="legend-swatch personal-line"></i>Personal</span>
+                        <span><i class="legend-swatch mobiles-line"></i>Mobile</span>
+                        <span><i class="legend-swatch laptops-line"></i>Laptops</span>
+                        <span><i class="legend-swatch wearables-line"></i>Wearables</span>
+                    </div>
+                </div>
+            </section>
+
+            <aside class="panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">Latest Breakdown</p>
+                        <h2>Current reading</h2>
+                    </div>
+                    <p class="panel-copy">Category totals from the freshest available sample.</p>
+                </div>
+
+                {% if page.latest_sample %}
+                <div class="snapshot-card live-detail-card" id="live-breakdown">
+                    <div class="snapshot-topline">
+                        <h3 data-field="location_name">{{ page.latest_sample.location_name }}</h3>
+                        <span data-field="captured_at_small">{{ page.latest_sample.captured_at }}</span>
+                    </div>
+                    <div class="snapshot-metrics">
+                        <div><span>Total</span><strong data-field="total">{{ page.latest_sample.total }}</strong></div>
+                        <div><span>Personal</span><strong data-field="personal">{{ page.latest_sample.personal }}</strong></div>
+                        <div><span>Mobile</span><strong data-field="mobiles">{{ page.latest_sample.mobiles }}</strong></div>
+                        <div><span>Laptops</span><strong data-field="laptops">{{ page.latest_sample.laptops }}</strong></div>
+                        <div><span>Wearables</span><strong data-field="wearables">{{ page.latest_sample.wearables }}</strong></div>
+                        <div><span>Unknown</span><strong data-field="unknowns">{{ page.latest_sample.unknowns }}</strong></div>
+                        <div><span>Apple</span><strong data-field="apples">{{ page.latest_sample.apples }}</strong></div>
+                        <div><span>Google</span><strong data-field="googles">{{ page.latest_sample.googles }}</strong></div>
+                        <div><span>Microsoft</span><strong data-field="microsofts">{{ page.latest_sample.microsofts }}</strong></div>
+                        <div><span>Samsung</span><strong data-field="samsungs">{{ page.latest_sample.samsungs }}</strong></div>
+                    </div>
+                </div>
+                {% else %}
+                <p class="empty-state" id="live-breakdown">No samples have been stored for this location yet.</p>
+                {% endif %}
+            </aside>
+        </section>
+    </main>
+
+    <script>
+        const initialHistory = {{ page.history_json }};
+        const selectedLocationId = {{ page.selected_location_id }};
+        const apiUrl = `/api/live-data?location_id=${selectedLocationId}&limit=36`;
+        const chart = document.getElementById("history-chart");
+        const statusEl = document.getElementById("chart-status");
+        const latestMetricRoot = document.getElementById("live-metrics");
+        const breakdownRoot = document.getElementById("live-breakdown");
+        const palette = {
+            total: "#0a6c74",
+            personal: "#d97925",
+            mobiles: "#3566b8",
+            laptops: "#8a5cf6",
+            wearables: "#4c8f5c"
+        };
+
+        function setField(root, field, value) {
+            const node = root?.querySelector(`[data-field="${field}"]`);
+            if (node) {
+                node.textContent = value;
+            }
+        }
+
+        function metricValues(sample) {
+            return [
+                ["total", sample?.total ?? "--"],
+                ["personal", sample?.personal ?? "--"],
+                ["device_name", sample?.device_name ?? "No data"],
+                ["captured_at", sample?.captured_at ?? "No data yet"]
+            ];
+        }
+
+        function breakdownValues(sample) {
+            return [
+                ["location_name", sample?.location_name ?? "No data"],
+                ["captured_at_small", sample?.captured_at ?? "No data yet"],
+                ["total", sample?.total ?? "--"],
+                ["personal", sample?.personal ?? "--"],
+                ["mobiles", sample?.mobiles ?? "--"],
+                ["laptops", sample?.laptops ?? "--"],
+                ["wearables", sample?.wearables ?? "--"],
+                ["unknowns", sample?.unknowns ?? "--"],
+                ["apples", sample?.apples ?? "--"],
+                ["googles", sample?.googles ?? "--"],
+                ["microsofts", sample?.microsofts ?? "--"],
+                ["samsungs", sample?.samsungs ?? "--"]
+            ];
+        }
+
+        function updateCards(sample) {
+            metricValues(sample).forEach(([field, value]) => setField(latestMetricRoot, field, value));
+            breakdownValues(sample).forEach(([field, value]) => setField(breakdownRoot, field, value));
+        }
+
+        function renderChart(history) {
+            const width = 760;
+            const height = 320;
+            const padding = { top: 22, right: 22, bottom: 44, left: 46 };
+            const innerWidth = width - padding.left - padding.right;
+            const innerHeight = height - padding.top - padding.bottom;
+            const series = ["total", "personal", "mobiles", "laptops", "wearables"];
+            const points = history.length ? history : [{ total: 0, personal: 0, mobiles: 0, laptops: 0, wearables: 0, captured_at: "No data" }];
+            const maxValue = Math.max(1, ...points.flatMap((point) => series.map((key) => point[key] ?? 0)));
+            const stepX = points.length > 1 ? innerWidth / (points.length - 1) : 0;
+
+            function lineFor(key) {
+                return points.map((point, index) => {
+                    const x = padding.left + stepX * index;
+                    const y = padding.top + innerHeight - ((point[key] ?? 0) / maxValue) * innerHeight;
+                    return `${x.toFixed(2)},${y.toFixed(2)}`;
+                }).join(" ");
+            }
+
+            const gridLines = Array.from({ length: 4 }, (_, index) => {
+                const value = (maxValue / 4) * (index + 1);
+                const y = padding.top + innerHeight - (value / maxValue) * innerHeight;
+                return `<g>
+                    <line x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}" class="grid-line" />
+                    <text x="${padding.left - 10}" y="${y + 4}" class="axis-label">${Math.round(value)}</text>
+                </g>`;
+            }).join("");
+
+            const labels = points.map((point, index) => {
+                if (points.length > 10 && index % Math.ceil(points.length / 6) !== 0 && index !== points.length - 1) {
+                    return "";
+                }
+                const x = padding.left + stepX * index;
+                const label = point.captured_at.slice(11, 16);
+                return `<text x="${x}" y="${height - 16}" text-anchor="middle" class="axis-label">${label}</text>`;
+            }).join("");
+
+            const lines = series.map((key) => (
+                `<polyline fill="none" stroke="${palette[key]}" stroke-width="${key === "total" ? 4 : 2.5}" points="${lineFor(key)}" />`
+            )).join("");
+
+            chart.innerHTML = `
+                <rect x="0" y="0" width="${width}" height="${height}" rx="24" class="chart-bg"></rect>
+                ${gridLines}
+                <line x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${height - padding.bottom}" class="axis-line"></line>
+                <line x1="${padding.left}" y1="${height - padding.bottom}" x2="${width - padding.right}" y2="${height - padding.bottom}" class="axis-line"></line>
+                ${lines}
+                ${labels}
+            `;
+        }
+
+        async function refresh() {
+            try {
+                const response = await fetch(apiUrl, { headers: { "Accept": "application/json" } });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const payload = await response.json();
+                updateCards(payload.latest_sample);
+                renderChart(payload.history);
+                statusEl.textContent = `Live data for ${payload.location_name}. Last poll ${payload.polled_at}.`;
+            } catch (error) {
+                statusEl.textContent = `Live refresh failed: ${error.message}`;
+            }
+        }
+
+        updateCards({% if page.latest_sample %}{{ page.latest_sample | json_encode }}{% else %}null{% endif %});
+        renderChart(initialHistory);
+        refresh();
+        window.setInterval(refresh, 15000);
+    </script>
+</body>
+</html>

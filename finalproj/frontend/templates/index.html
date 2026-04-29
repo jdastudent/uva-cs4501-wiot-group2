@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Wireless IoT Dashboard</title>
+    <title>Occupancy Safety Dashboard</title>
     <meta name="theme-color" content="#0f172a">
     <link rel="stylesheet" href="/static/styles.css">
 </head>
@@ -16,18 +16,22 @@
 
         <section class="hero hero-panel">
             <div class="hero-copy">
-                <p class="eyebrow">UVA Wireless IoT Monitor</p>
-                <h1>Campus device activity across UVA, presented as an operations dashboard.</h1>
+                <p class="eyebrow">UVA Occupancy Safety Monitor</p>
+                <h1>Estimate building occupancy from mobile-device counts and compare it against fire-code limits.</h1>
                 <p class="lede">
-                    Filter historical captures by building or device, inspect the latest stored
-                    readings, and move into the live view when you need a tighter location-specific
-                    feed.
+                    This dashboard treats detected mobile devices as a proxy for people in an area.
+                    Review historical captures by building, inspect the latest location snapshots,
+                    and use the estimated occupancy signal to decide when a space may be approaching
+                    capacity.
                 </p>
                 <div class="hero-badges">
                     <span class="hero-badge">Rust + Axum</span>
                     <span class="hero-badge">SQLite-backed telemetry</span>
-                    <span class="hero-badge">Building-level monitoring</span>
+                    <span class="hero-badge">Fire-code occupancy proxy</span>
                 </div>
+                <p class="objective-note">
+                    Occupancy estimate used on this site: <strong>mobile device count = estimated people present</strong>.
+                </p>
             </div>
             <form class="filter-panel" method="get" action="/">
                 <div class="filter-panel-header">
@@ -77,12 +81,12 @@
             <article class="summary-card">
                 <span class="summary-label">Average Total Devices</span>
                 <strong>{{ page.summary.avg_total }}</strong>
-                <p class="summary-note">Mean observed count across the selected records.</p>
+                <p class="summary-note">Mean overall device count across the selected records.</p>
             </article>
             <article class="summary-card">
                 <span class="summary-label">Peak Total Devices</span>
                 <strong>{{ page.summary.max_total }}</strong>
-                <p class="summary-note">Highest total device reading in the filtered sample.</p>
+                <p class="summary-note">Highest overall device reading in the filtered sample.</p>
             </article>
             <article class="summary-card">
                 <span class="summary-label">Latest Matching Sample</span>
@@ -96,9 +100,9 @@
                 <div class="panel-header">
                     <div>
                         <p class="eyebrow">Recent Records</p>
-                        <h2>Filtered capture log</h2>
+                        <h2>Filtered occupancy evidence</h2>
                     </div>
-                    <p class="panel-copy">Sorted newest-first from the SQLite event store.</p>
+                    <p class="panel-copy">Use the mobile-device column as the estimated number of people in the space.</p>
                 </div>
 
                 {% if page.records | length > 0 %}
@@ -111,7 +115,7 @@
                                 <th>Device</th>
                                 <th>Total</th>
                                 <th>Personal</th>
-                                <th>Mobile</th>
+                                <th>Est. People</th>
                                 <th>Laptops</th>
                                 <th>Wearables</th>
                             </tr>
@@ -143,7 +147,7 @@
                         <p class="eyebrow">Latest By Building</p>
                         <h2>Current building snapshots</h2>
                     </div>
-                    <p class="panel-copy">One most-recent reading per seeded campus location.</p>
+                    <p class="panel-copy">Each card includes the mobile-device count used as the occupancy estimate for fire-code monitoring.</p>
                 </div>
 
                 {% if page.location_snapshots | length > 0 %}
@@ -164,7 +168,7 @@
                                 <strong>{{ snapshot.personal }}</strong>
                             </div>
                             <div>
-                                <span>Mobile</span>
+                                <span>Est. Occupants</span>
                                 <strong>{{ snapshot.mobiles }}</strong>
                             </div>
                             <div>

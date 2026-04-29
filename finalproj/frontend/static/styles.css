@@ -198,6 +198,20 @@ h3 {
     margin-top: 0.9rem;
 }
 
+.objective-note {
+    margin: 1rem 0 0;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface-soft);
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+.objective-note strong {
+    color: var(--text);
+}
+
 .hero-badge {
     padding: 0.45rem 0.75rem;
     border: 1px solid var(--line);

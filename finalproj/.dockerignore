@@ -1,0 +1,10 @@
+.git
+.gitignore
+.codex
+.pio
+backend/.direnv
+backend/target
+backend/.envrc
+backend/data.dat
+backend/data_test
+**/*.log

@@ -23,6 +23,7 @@ const LOCATIONS: &[(u8, &str)] = &[
 pub struct LocationOption {
     pub location_id: i64,
     pub location_name: String,
+    pub capacity: Option<i64>,
 }
 
 #[derive(Clone, Debug, Serialize, FromRow)]
@@ -53,7 +54,9 @@ pub struct SummaryRow {
 
 #[derive(Clone, Debug, Serialize, FromRow)]
 pub struct LocationSnapshotRow {
+    pub location_id: i64,
     pub location_name: String,
+    pub capacity: Option<i64>,
     pub total: i64,
     pub personal: i64,
     pub mobiles: i64,
@@ -66,6 +69,7 @@ pub struct LocationSnapshotRow {
 pub struct LocationLiveRow {
     pub location_id: i64,
     pub location_name: String,
+    pub capacity: Option<i64>,
     pub device_name: String,
     pub total: i64,
     pub personal: i64,
@@ -101,6 +105,10 @@ pub async fn init_db(pool: &Pool<Sqlite>) {
     .await
     .unwrap();
 
+    let _ = sqlx::query("alter table locations add column capacity integer")
+        .execute(pool)
+        .await;
+
     sqlx::query(
         "create table if not exists devices (
             device_id integer primary key,
@@ -135,9 +143,9 @@ pub async fn init_db(pool: &Pool<Sqlite>) {
 
     for &(id, location) in LOCATIONS {
         sqlx::query(
-            "insert into locations (location_id, location_name)
-             values ($1, $2)
-             on conflict(location_id) do nothing",
+            "insert into locations (location_id, location_name, capacity)
+             values ($1, $2, null)
+             on conflict(location_id) do update set location_name = excluded.location_name",
         )
         .bind(id)
         .bind(location)
@@ -196,7 +204,7 @@ pub async fn insert_db(data: AppMessage, device_id: String, timestamp: i64, pool
 
 pub async fn list_locations(pool: &Pool<Sqlite>) -> Result<Vec<LocationOption>, sqlx::Error> {
     sqlx::query_as::<_, LocationOption>(
-        "select location_id, location_name
+        "select location_id, location_name, capacity
          from locations
          order by location_name asc",
     )
@@ -269,7 +277,9 @@ pub async fn fetch_latest_location_snapshots(
     pool: &Pool<Sqlite>,
 ) -> Result<Vec<LocationSnapshotRow>, sqlx::Error> {
     sqlx::query_as::<_, LocationSnapshotRow>(
-        "select l.location_name,
+        "select l.location_id,
+                l.location_name,
+                l.capacity,
                 d.total,
                 d.personal,
                 d.mobiles,
@@ -298,6 +308,7 @@ pub async fn fetch_latest_for_location(
     sqlx::query_as::<_, LocationLiveRow>(
         "select d.location_id,
                 l.location_name,
+                l.capacity,
                 dv.device_name,
                 d.total,
                 d.personal,
@@ -347,4 +358,22 @@ pub async fn fetch_recent_location_history(
     .bind(limit)
     .fetch_all(pool)
     .await
+}
+
+pub async fn update_location_capacity(
+    pool: &Pool<Sqlite>,
+    location_id: i64,
+    capacity: Option<i64>,
+) -> Result<(), sqlx::Error> {
+    sqlx::query(
+        "update locations
+         set capacity = ?
+         where location_id = ?",
+    )
+    .bind(capacity)
+    .bind(location_id)
+    .execute(pool)
+    .await?;
+
+    Ok(())
 }

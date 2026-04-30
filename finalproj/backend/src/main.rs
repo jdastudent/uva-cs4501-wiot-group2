@@ -1,10 +1,10 @@
 use std::{env, net::SocketAddr, path::PathBuf, sync::Arc};
 
 use axum::{
-    extract::{Query, State},
+    extract::{Form, Query, State},
     http::StatusCode,
-    response::{Html, IntoResponse, Response},
-    routing::get,
+    response::{Html, IntoResponse, Redirect, Response},
+    routing::{get, post},
     Json, Router,
 };
 use base64::{prelude::BASE64_STANDARD, Engine};
@@ -20,8 +20,9 @@ use tower_http::services::ServeDir;
 use crate::{
     db::{
         fetch_latest_for_location, fetch_latest_location_snapshots, fetch_recent_location_history,
-        fetch_records, fetch_summary, init_db, insert_db, list_locations, LocationHistoryRow,
-        LocationLiveRow, LocationOption, LocationSnapshotRow, RecordRow, SummaryRow,
+        fetch_records, fetch_summary, init_db, insert_db, list_locations, update_location_capacity,
+        LocationHistoryRow, LocationLiveRow, LocationOption, LocationSnapshotRow, RecordRow,
+        SummaryRow,
     },
     parse::parse_app_message,
 };
@@ -78,6 +79,14 @@ struct LiveApiFilters {
 }
 
 #[derive(Debug, Deserialize)]
+struct CapacityUpdateForm {
+    location_id: i64,
+    #[serde(default, deserialize_with = "empty_string_as_none_i64")]
+    capacity: Option<i64>,
+    return_to: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
 struct AppMessage {
     total_devices: u16,
     personal_devices: u16,
@@ -106,6 +115,10 @@ struct DashboardPage {
 struct LivePage {
     selected_location_id: i64,
     selected_location_name: String,
+    selected_location_capacity: Option<i64>,
+    selected_location_capacity_display: String,
+    selected_location_capacity_input: String,
+    selected_location_capacity_json: String,
     latest_sample: Option<LiveSampleView>,
     history: Vec<HistoryPointView>,
     history_json: String,
@@ -122,6 +135,8 @@ struct DashboardFilterView {
 struct LocationView {
     location_id: i64,
     location_name: String,
+    capacity: Option<i64>,
+    capacity_display: String,
     selected: bool,
 }
 
@@ -153,7 +168,12 @@ struct RecordView {
 
 #[derive(Debug, Serialize)]
 struct LocationSnapshotView {
+    location_id: i64,
     location_name: String,
+    capacity: Option<i64>,
+    capacity_display: String,
+    estimated_occupants: i64,
+    capacity_status: CapacityStatusView,
     total: i64,
     personal: i64,
     mobiles: i64,
@@ -165,6 +185,10 @@ struct LocationSnapshotView {
 #[derive(Debug, Serialize)]
 struct LiveSampleView {
     location_name: String,
+    capacity: Option<i64>,
+    capacity_display: String,
+    estimated_occupants: i64,
+    capacity_status: CapacityStatusView,
     device_name: String,
     total: i64,
     personal: i64,
@@ -195,9 +219,17 @@ struct HistoryPointView {
 struct LiveApiResponse {
     location_id: i64,
     location_name: String,
+    capacity: Option<i64>,
     latest_sample: Option<LiveSampleView>,
     history: Vec<HistoryPointView>,
     polled_at: String,
+}
+
+#[derive(Debug, Serialize, Clone)]
+struct CapacityStatusView {
+    state: &'static str,
+    label: String,
+    detail: String,
 }
 
 impl AppMessage {
@@ -259,6 +291,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/", get(index))
         .route("/live", get(live_page))
         .route("/api/live-data", get(live_data))
+        .route("/locations/capacity", post(save_location_capacity))
         .nest_service("/static", ServeDir::new(frontend_static_dir()))
         .with_state(state);
 
@@ -329,8 +362,9 @@ async fn live_page(
     Query(filters): Query<LivePageFilters>,
 ) -> Result<Html<String>, AppError> {
     let locations = list_locations(&state.pool).await?;
-    let (selected_location_id, selected_location_name) =
-        select_location(&locations, filters.location_id)?;
+    let selected_location = select_location(&locations, filters.location_id)?;
+    let selected_location_id = selected_location.location_id;
+    let selected_location_name = selected_location.location_name.clone();
     let latest = fetch_latest_for_location(&state.pool, selected_location_id).await?;
     let history = fetch_recent_location_history(&state.pool, selected_location_id, 36).await?;
     let history_views: Vec<_> = history.into_iter().map(history_point_view).collect();
@@ -338,6 +372,14 @@ async fn live_page(
     let page = LivePage {
         selected_location_id,
         selected_location_name,
+        selected_location_capacity: selected_location.capacity,
+        selected_location_capacity_display: format_capacity(selected_location.capacity),
+        selected_location_capacity_input: selected_location
+            .capacity
+            .map(|value| value.to_string())
+            .unwrap_or_default(),
+        selected_location_capacity_json: serde_json::to_string(&selected_location.capacity)
+            .map_err(|error| AppError(error.to_string()))?,
         latest_sample: latest.map(live_sample_view),
         history_json: serde_json::to_string(&history_views)
             .map_err(|error| AppError(error.to_string()))?,
@@ -360,8 +402,9 @@ async fn live_data(
     Query(filters): Query<LiveApiFilters>,
 ) -> Result<Json<LiveApiResponse>, AppError> {
     let locations = list_locations(&state.pool).await?;
-    let (selected_location_id, selected_location_name) =
-        select_location(&locations, filters.location_id)?;
+    let selected_location = select_location(&locations, filters.location_id)?;
+    let selected_location_id = selected_location.location_id;
+    let selected_location_name = selected_location.location_name.clone();
     let limit = filters.limit.unwrap_or(36).clamp(8, 120);
     let latest = fetch_latest_for_location(&state.pool, selected_location_id).await?;
     let history = fetch_recent_location_history(&state.pool, selected_location_id, limit).await?;
@@ -369,10 +412,31 @@ async fn live_data(
     Ok(Json(LiveApiResponse {
         location_id: selected_location_id,
         location_name: selected_location_name,
+        capacity: selected_location.capacity,
         latest_sample: latest.map(live_sample_view),
         history: history.into_iter().map(history_point_view).collect(),
         polled_at: format_timestamp(Some(Local::now().timestamp())),
     }))
+}
+
+async fn save_location_capacity(
+    State(state): State<AppState>,
+    Form(form): Form<CapacityUpdateForm>,
+) -> Result<Redirect, AppError> {
+    if let Some(capacity) = form.capacity {
+        if capacity < 0 {
+            return Err(AppError("Capacity must be zero or greater".to_string()));
+        }
+    }
+
+    update_location_capacity(&state.pool, form.location_id, form.capacity).await?;
+
+    let target = form
+        .return_to
+        .filter(|value| value.starts_with('/'))
+        .unwrap_or_else(|| format!("/live?location_id={}", form.location_id));
+
+    Ok(Redirect::to(&target))
 }
 
 async fn maybe_start_mqtt(pool: Pool<Sqlite>) -> Result<(), Box<dyn std::error::Error>> {
@@ -505,7 +569,12 @@ fn record_view(record: RecordRow) -> RecordView {
 
 fn location_snapshot_view(snapshot: LocationSnapshotRow) -> LocationSnapshotView {
     LocationSnapshotView {
+        location_id: snapshot.location_id,
         location_name: snapshot.location_name,
+        capacity: snapshot.capacity,
+        capacity_display: format_capacity(snapshot.capacity),
+        estimated_occupants: snapshot.mobiles,
+        capacity_status: capacity_status_view(snapshot.capacity, snapshot.mobiles),
         total: snapshot.total,
         personal: snapshot.personal,
         mobiles: snapshot.mobiles,
@@ -518,6 +587,10 @@ fn location_snapshot_view(snapshot: LocationSnapshotRow) -> LocationSnapshotView
 fn live_sample_view(sample: LocationLiveRow) -> LiveSampleView {
     LiveSampleView {
         location_name: sample.location_name,
+        capacity: sample.capacity,
+        capacity_display: format_capacity(sample.capacity),
+        estimated_occupants: sample.mobiles,
+        capacity_status: capacity_status_view(sample.capacity, sample.mobiles),
         device_name: sample.device_name,
         total: sample.total,
         personal: sample.personal,
@@ -548,16 +621,52 @@ fn history_point_view(point: LocationHistoryRow) -> HistoryPointView {
 
 fn location_view(location: LocationOption, selected_location_id: Option<i64>) -> LocationView {
     LocationView {
+        capacity: location.capacity,
+        capacity_display: format_capacity(location.capacity),
         selected: selected_location_id == Some(location.location_id),
         location_id: location.location_id,
         location_name: location.location_name,
     }
 }
 
+fn format_capacity(capacity: Option<i64>) -> String {
+    capacity
+        .map(|value| value.to_string())
+        .unwrap_or_else(|| "--".to_string())
+}
+
+fn capacity_status_view(capacity: Option<i64>, estimated_occupants: i64) -> CapacityStatusView {
+    match capacity {
+        Some(capacity) if estimated_occupants > capacity => CapacityStatusView {
+            state: "over",
+            label: "Over capacity".to_string(),
+            detail: format!(
+                "{} over the limit of {}",
+                estimated_occupants - capacity,
+                capacity
+            ),
+        },
+        Some(capacity) => CapacityStatusView {
+            state: "within",
+            label: "Within capacity".to_string(),
+            detail: format!(
+                "{} spots remaining out of {}",
+                capacity - estimated_occupants,
+                capacity
+            ),
+        },
+        None => CapacityStatusView {
+            state: "unknown",
+            label: "Capacity not set".to_string(),
+            detail: "Add a fire-code limit for automated occupancy checks.".to_string(),
+        },
+    }
+}
+
 fn select_location(
     locations: &[LocationOption],
     requested_location_id: Option<i64>,
-) -> Result<(i64, String), AppError> {
+) -> Result<LocationOption, AppError> {
     if locations.is_empty() {
         return Err(AppError("No locations are configured".to_string()));
     }
@@ -567,12 +676,11 @@ fn select_location(
             .iter()
             .find(|location| location.location_id == location_id)
         {
-            return Ok((location.location_id, location.location_name.clone()));
+            return Ok(location.clone());
         }
     }
 
-    let location = &locations[0];
-    Ok((location.location_id, location.location_name.clone()))
+    Ok(locations[0].clone())
 }
 
 fn format_timestamp(timestamp: Option<i64>) -> String {
@@ -600,5 +708,70 @@ impl From<tera::Error> for AppError {
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         (StatusCode::INTERNAL_SERVER_ERROR, self.0).into_response()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn renders_index_template() {
+        let templates = load_templates().expect("templates should load");
+        let page = DashboardPage {
+            filters: DashboardFilterView {
+                selected_device_name: String::new(),
+                limit: 50,
+            },
+            summary: SummaryView {
+                sample_count: 1,
+                avg_total: "12.0".to_string(),
+                max_total: 24,
+                latest_seen: "2026-04-30 12:00:00".to_string(),
+            },
+            records: vec![RecordView {
+                id: 1,
+                location_name: "Rice Hall".to_string(),
+                device_name: "test-device".to_string(),
+                total: 24,
+                personal: 20,
+                mobiles: 18,
+                laptops: 1,
+                wearables: 1,
+                unknowns: 0,
+                apples: 10,
+                googles: 5,
+                microsofts: 2,
+                samsungs: 3,
+                captured_at: "2026-04-30 12:00:00".to_string(),
+            }],
+            locations: vec![LocationView {
+                location_id: 1,
+                location_name: "Rice Hall".to_string(),
+                capacity: Some(15),
+                capacity_display: "15".to_string(),
+                selected: true,
+            }],
+            location_snapshots: vec![LocationSnapshotView {
+                location_id: 1,
+                location_name: "Rice Hall".to_string(),
+                capacity: Some(15),
+                capacity_display: "15".to_string(),
+                estimated_occupants: 18,
+                capacity_status: capacity_status_view(Some(15), 18),
+                total: 24,
+                personal: 20,
+                mobiles: 18,
+                laptops: 1,
+                wearables: 1,
+                captured_at: "2026-04-30 12:00:00".to_string(),
+            }],
+        };
+
+        let mut context = Context::new();
+        context.insert("page", &page);
+        templates
+            .render("index.html", &context)
+            .expect("index template should render");
     }
 }

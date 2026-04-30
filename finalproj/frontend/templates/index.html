@@ -153,10 +153,14 @@
                 {% if page.location_snapshots | length > 0 %}
                 <div class="snapshot-list">
                     {% for snapshot in page.location_snapshots %}
-                    <article class="snapshot-card">
+                    <article class="snapshot-card snapshot-card-{{ snapshot.capacity_status.state }}">
                         <div class="snapshot-topline">
                             <h3>{{ snapshot.location_name }}</h3>
                             <span>{{ snapshot.captured_at }}</span>
+                        </div>
+                        <div class="capacity-alert capacity-alert-{{ snapshot.capacity_status.state }}">
+                            <strong>{{ snapshot.capacity_status.label }}</strong>
+                            <span>{{ snapshot.capacity_status.detail }}</span>
                         </div>
                         <div class="snapshot-metrics">
                             <div>
@@ -169,7 +173,14 @@
                             </div>
                             <div>
                                 <span>Est. Occupants</span>
-                                <strong>{{ snapshot.mobiles }}</strong>
+                                <strong>{{ snapshot.estimated_occupants }}</strong>
+                            </div>
+                            <div>
+                                <span>Capacity</span>
+                                <strong>{{ snapshot.capacity_display }}</strong>
+                            </div>
+                            <div class="snapshot-action">
+                                <a class="inline-link" href="/live?location_id={{ snapshot.location_id }}">Open live feed</a>
                             </div>
                             <div>
                                 <span>Laptops</span>

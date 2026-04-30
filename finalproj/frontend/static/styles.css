@@ -330,6 +330,20 @@ button:hover {
     line-height: 1.55;
 }
 
+.summary-card-over {
+    border-color: rgba(220, 38, 38, 0.38);
+    background: color-mix(in srgb, #dc2626 8%, var(--surface));
+}
+
+.summary-card-within {
+    border-color: rgba(22, 163, 74, 0.32);
+    background: color-mix(in srgb, #16a34a 8%, var(--surface));
+}
+
+.summary-card-unknown {
+    border-color: var(--line);
+}
+
 .content-grid {
     display: grid;
     grid-template-columns: minmax(0, 1.45fr) minmax(320px, 1fr);
@@ -339,6 +353,25 @@ button:hover {
 .panel {
     padding: 1.2rem;
     border-radius: var(--radius-lg);
+}
+
+.capacity-panel {
+    margin-bottom: 1.5rem;
+}
+
+.capacity-form {
+    display: grid;
+    gap: 0.95rem;
+}
+
+.capacity-form label {
+    display: grid;
+    gap: 0.38rem;
+}
+
+.capacity-form span {
+    color: var(--muted);
+    font-size: 0.82rem;
 }
 
 .panel-header {
@@ -405,6 +438,18 @@ tbody tr:hover {
     background: var(--surface-soft);
 }
 
+.snapshot-card-over,
+.live-detail-card-over {
+    border-color: rgba(220, 38, 38, 0.38);
+    background: color-mix(in srgb, #dc2626 7%, var(--surface-soft));
+}
+
+.snapshot-card-within,
+.live-detail-card-within {
+    border-color: rgba(22, 163, 74, 0.32);
+    background: color-mix(in srgb, #16a34a 7%, var(--surface-soft));
+}
+
 .snapshot-topline {
     display: flex;
     gap: 0.75rem;
@@ -431,6 +476,20 @@ tbody tr:hover {
 .snapshot-metrics strong {
     font-size: 1.12rem;
     letter-spacing: -0.03em;
+}
+
+.snapshot-action {
+    align-content: end;
+}
+
+.inline-link {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.inline-link:hover {
+    text-decoration: underline;
 }
 
 .live-hero h1 {
@@ -526,6 +585,48 @@ tbody tr:hover {
 
 .live-detail-card {
     background: var(--surface-soft);
+}
+
+.capacity-alert {
+    display: grid;
+    gap: 0.18rem;
+    margin-bottom: 0.9rem;
+    padding: 0.85rem 0.95rem;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: color-mix(in srgb, var(--surface-strong) 82%, transparent);
+}
+
+.capacity-alert strong {
+    font-size: 0.98rem;
+}
+
+.capacity-alert span {
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.capacity-alert-over {
+    border-color: rgba(220, 38, 38, 0.36);
+    background: color-mix(in srgb, #dc2626 10%, var(--surface-strong));
+}
+
+.capacity-alert-over strong {
+    color: #dc2626;
+}
+
+.capacity-alert-within {
+    border-color: rgba(22, 163, 74, 0.32);
+    background: color-mix(in srgb, #16a34a 10%, var(--surface-strong));
+}
+
+.capacity-alert-within strong {
+    color: #15803d;
+}
+
+.capacity-alert-unknown strong {
+    color: var(--text);
 }
 
 .empty-state {

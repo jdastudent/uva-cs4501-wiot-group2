@@ -56,6 +56,33 @@
             </form>
         </section>
 
+        <section class="panel capacity-panel">
+            <div class="panel-header">
+                <div>
+                    <p class="eyebrow">Capacity Settings</p>
+                    <h2>Fire-code limit for {{ page.selected_location_name }}</h2>
+                </div>
+                <p class="panel-copy">This limit is compared against the mobile-device count to estimate whether the location is over capacity.</p>
+            </div>
+            <form class="capacity-form" method="post" action="/locations/capacity">
+                <input type="hidden" name="location_id" value="{{ page.selected_location_id }}">
+                <input type="hidden" name="return_to" value="/live?location_id={{ page.selected_location_id }}">
+                <label>
+                    <span>Capacity</span>
+                    <input
+                        type="number"
+                        name="capacity"
+                        min="0"
+                        placeholder="Leave blank if not set"
+                        value="{{ page.selected_location_capacity_input }}"
+                    >
+                </label>
+                <div class="filter-actions">
+                    <button type="submit">Save Capacity</button>
+                </div>
+            </form>
+        </section>
+
         <section class="summary-grid live-summary-grid" id="live-metrics">
             <article class="summary-card">
                 <span class="summary-label">Estimated Occupants</span>
@@ -63,6 +90,22 @@
                     {% if page.latest_sample %}{{ page.latest_sample.mobiles }}{% else %}--{% endif %}
                 </strong>
                 <p class="summary-note">Mobile-device count used as the current people estimate.</p>
+            </article>
+            <article class="summary-card">
+                <span class="summary-label">Capacity Limit</span>
+                <strong data-field="capacity">
+                    {% if page.latest_sample %}{{ page.latest_sample.capacity_display }}{% else %}{{ page.selected_location_capacity_display }}{% endif %}
+                </strong>
+                <p class="summary-note">Stored fire-code capacity for this location.</p>
+            </article>
+            <article class="summary-card {% if page.latest_sample %}summary-card-{{ page.latest_sample.capacity_status.state }}{% else %}summary-card-unknown{% endif %}" data-field-card="capacity-status">
+                <span class="summary-label">Capacity Status</span>
+                <strong class="summary-copy" data-field="capacity_status_label">
+                    {% if page.latest_sample %}{{ page.latest_sample.capacity_status.label }}{% else %}Capacity not set{% endif %}
+                </strong>
+                <p class="summary-note" data-field="capacity_status_detail">
+                    {% if page.latest_sample %}{{ page.latest_sample.capacity_status.detail }}{% else %}Add a capacity to enable live over-limit warnings.{% endif %}
+                </p>
             </article>
             <article class="summary-card">
                 <span class="summary-label">Latest Total Devices</span>
@@ -125,28 +168,29 @@
                     <p class="panel-copy">Use the estimated occupants value as the fire-code monitoring signal when mobile data is present.</p>
                 </div>
 
-                {% if page.latest_sample %}
-                <div class="snapshot-card live-detail-card" id="live-breakdown">
+                <div class="snapshot-card live-detail-card {% if page.latest_sample %}live-detail-card-{{ page.latest_sample.capacity_status.state }}{% else %}live-detail-card-unknown{% endif %}" id="live-breakdown" data-state="{% if page.latest_sample %}{{ page.latest_sample.capacity_status.state }}{% else %}unknown{% endif %}">
                     <div class="snapshot-topline">
-                        <h3 data-field="location_name">{{ page.latest_sample.location_name }}</h3>
-                        <span data-field="captured_at_small">{{ page.latest_sample.captured_at }}</span>
+                        <h3 data-field="location_name">{% if page.latest_sample %}{{ page.latest_sample.location_name }}{% else %}{{ page.selected_location_name }}{% endif %}</h3>
+                        <span data-field="captured_at_small">{% if page.latest_sample %}{{ page.latest_sample.captured_at }}{% else %}No data yet{% endif %}</span>
+                    </div>
+                    <div class="capacity-alert {% if page.latest_sample %}capacity-alert-{{ page.latest_sample.capacity_status.state }}{% else %}capacity-alert-unknown{% endif %}">
+                        <strong data-field="capacity_status_label">{% if page.latest_sample %}{{ page.latest_sample.capacity_status.label }}{% else %}Capacity not set{% endif %}</strong>
+                        <span data-field="capacity_status_detail">{% if page.latest_sample %}{{ page.latest_sample.capacity_status.detail }}{% else %}Add a capacity to enable live over-limit warnings.{% endif %}</span>
                     </div>
                     <div class="snapshot-metrics">
-                        <div><span>Est. Occupants</span><strong data-field="mobiles">{{ page.latest_sample.mobiles }}</strong></div>
-                        <div><span>Total Devices</span><strong data-field="total">{{ page.latest_sample.total }}</strong></div>
-                        <div><span>Personal</span><strong data-field="personal">{{ page.latest_sample.personal }}</strong></div>
-                        <div><span>Laptops</span><strong data-field="laptops">{{ page.latest_sample.laptops }}</strong></div>
-                        <div><span>Wearables</span><strong data-field="wearables">{{ page.latest_sample.wearables }}</strong></div>
-                        <div><span>Unknown</span><strong data-field="unknowns">{{ page.latest_sample.unknowns }}</strong></div>
-                        <div><span>Apple</span><strong data-field="apples">{{ page.latest_sample.apples }}</strong></div>
-                        <div><span>Google</span><strong data-field="googles">{{ page.latest_sample.googles }}</strong></div>
-                        <div><span>Microsoft</span><strong data-field="microsofts">{{ page.latest_sample.microsofts }}</strong></div>
-                        <div><span>Samsung</span><strong data-field="samsungs">{{ page.latest_sample.samsungs }}</strong></div>
+                        <div><span>Est. Occupants</span><strong data-field="mobiles">{% if page.latest_sample %}{{ page.latest_sample.mobiles }}{% else %}--{% endif %}</strong></div>
+                        <div><span>Capacity</span><strong data-field="capacity">{% if page.latest_sample %}{{ page.latest_sample.capacity_display }}{% else %}{{ page.selected_location_capacity_display }}{% endif %}</strong></div>
+                        <div><span>Total Devices</span><strong data-field="total">{% if page.latest_sample %}{{ page.latest_sample.total }}{% else %}--{% endif %}</strong></div>
+                        <div><span>Personal</span><strong data-field="personal">{% if page.latest_sample %}{{ page.latest_sample.personal }}{% else %}--{% endif %}</strong></div>
+                        <div><span>Laptops</span><strong data-field="laptops">{% if page.latest_sample %}{{ page.latest_sample.laptops }}{% else %}--{% endif %}</strong></div>
+                        <div><span>Wearables</span><strong data-field="wearables">{% if page.latest_sample %}{{ page.latest_sample.wearables }}{% else %}--{% endif %}</strong></div>
+                        <div><span>Unknown</span><strong data-field="unknowns">{% if page.latest_sample %}{{ page.latest_sample.unknowns }}{% else %}--{% endif %}</strong></div>
+                        <div><span>Apple</span><strong data-field="apples">{% if page.latest_sample %}{{ page.latest_sample.apples }}{% else %}--{% endif %}</strong></div>
+                        <div><span>Google</span><strong data-field="googles">{% if page.latest_sample %}{{ page.latest_sample.googles }}{% else %}--{% endif %}</strong></div>
+                        <div><span>Microsoft</span><strong data-field="microsofts">{% if page.latest_sample %}{{ page.latest_sample.microsofts }}{% else %}--{% endif %}</strong></div>
+                        <div><span>Samsung</span><strong data-field="samsungs">{% if page.latest_sample %}{{ page.latest_sample.samsungs }}{% else %}--{% endif %}</strong></div>
                     </div>
                 </div>
-                {% else %}
-                <p class="empty-state" id="live-breakdown">No samples have been stored for this location yet.</p>
-                {% endif %}
             </aside>
         </section>
     </main>
@@ -154,6 +198,8 @@
     <script>
         const initialHistory = {{ page.history_json }};
         const selectedLocationId = {{ page.selected_location_id }};
+        const selectedLocationName = {{ page.selected_location_name | json_encode }};
+        const selectedLocationCapacity = {{ page.selected_location_capacity_json }};
         const apiUrl = `/api/live-data?location_id=${selectedLocationId}&limit=36`;
         const chart = document.getElementById("history-chart");
         const statusEl = document.getElementById("chart-status");
@@ -176,9 +222,12 @@
 
         function metricValues(sample) {
             return [
+                ["capacity", sample?.capacity ?? "--"],
                 ["total", sample?.total ?? "--"],
                 ["mobiles", sample?.mobiles ?? "--"],
                 ["personal", sample?.personal ?? "--"],
+                ["capacity_status_label", sample?.capacity_status?.label ?? "Capacity not set"],
+                ["capacity_status_detail", sample?.capacity_status?.detail ?? "Add a capacity to enable live over-limit warnings."],
                 ["device_name", sample?.device_name ?? "No data"],
                 ["captured_at", sample?.captured_at ?? "No data yet"]
             ];
@@ -188,7 +237,10 @@
             return [
                 ["location_name", sample?.location_name ?? "No data"],
                 ["captured_at_small", sample?.captured_at ?? "No data yet"],
+                ["capacity_status_label", sample?.capacity_status?.label ?? "Capacity not set"],
+                ["capacity_status_detail", sample?.capacity_status?.detail ?? "Add a capacity to enable live over-limit warnings."],
                 ["mobiles", sample?.mobiles ?? "--"],
+                ["capacity", sample?.capacity ?? "--"],
                 ["total", sample?.total ?? "--"],
                 ["personal", sample?.personal ?? "--"],
                 ["laptops", sample?.laptops ?? "--"],
@@ -201,9 +253,40 @@
             ];
         }
 
-        function updateCards(sample) {
-            metricValues(sample).forEach(([field, value]) => setField(latestMetricRoot, field, value));
-            breakdownValues(sample).forEach(([field, value]) => setField(breakdownRoot, field, value));
+        function fallbackSample(sample, capacityValue) {
+            if (sample) {
+                return sample;
+            }
+            return {
+                location_name: selectedLocationName,
+                capacity: capacityValue,
+                capacity_status: {
+                    state: "unknown",
+                    label: "Capacity not set",
+                    detail: capacityValue == null
+                        ? "Add a capacity to enable live over-limit warnings."
+                        : "No live sample yet. Capacity is stored and will be checked on the next reading."
+                }
+            };
+        }
+
+        function updateCards(sample, capacityValue = selectedLocationCapacity) {
+            const effectiveSample = fallbackSample(sample, capacityValue);
+            metricValues(effectiveSample).forEach(([field, value]) => setField(latestMetricRoot, field, value));
+            breakdownValues(effectiveSample).forEach(([field, value]) => setField(breakdownRoot, field, value));
+            const summaryStatusCard = latestMetricRoot?.querySelector("[data-field-card='capacity-status']");
+            const state = effectiveSample?.capacity_status?.state ?? "unknown";
+            if (summaryStatusCard) {
+                summaryStatusCard.className = `summary-card summary-card-${state}`;
+            }
+            if (breakdownRoot) {
+                breakdownRoot.dataset.state = state;
+                breakdownRoot.className = `snapshot-card live-detail-card live-detail-card-${state}`;
+                const alert = breakdownRoot.querySelector(".capacity-alert");
+                if (alert) {
+                    alert.className = `capacity-alert capacity-alert-${state}`;
+                }
+            }
         }
 
         function renderChart(history) {
@@ -264,16 +347,17 @@
                     throw new Error(`HTTP ${response.status}`);
                 }
                 const payload = await response.json();
-                updateCards(payload.latest_sample);
+                updateCards(payload.latest_sample, payload.capacity);
                 renderChart(payload.history);
                 const estimate = payload.latest_sample?.mobiles ?? "no";
-                statusEl.textContent = `Live data for ${payload.location_name}. Estimated occupants: ${estimate}. Last poll ${payload.polled_at}.`;
+                const state = payload.latest_sample?.capacity_status?.label ?? "Capacity not set";
+                statusEl.textContent = `Live data for ${payload.location_name}. Estimated occupants: ${estimate}. ${state}. Last poll ${payload.polled_at}.`;
             } catch (error) {
                 statusEl.textContent = `Live refresh failed: ${error.message}`;
             }
         }
 
-        updateCards({% if page.latest_sample %}{{ page.latest_sample | json_encode }}{% else %}null{% endif %});
+        updateCards({% if page.latest_sample %}{{ page.latest_sample | json_encode }}{% else %}null{% endif %}, selectedLocationCapacity);
         renderChart(initialHistory);
         refresh();
         window.setInterval(refresh, 15000);

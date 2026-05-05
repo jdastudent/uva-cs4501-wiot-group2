@@ -504,6 +504,10 @@ async fn receive_message(message: Message, pool: Pool<Sqlite>) {
         eprintln!("Skipping message from {device_id}: checksum mismatch");
         return;
     }
+    println!(
+        "Recieved message from {device_id} at {} with data:\n{app_message:?}",
+        parsed.received_at.timestamp()
+    );
 
     insert_db(
         app_message,

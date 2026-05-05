@@ -17,6 +17,7 @@ const LOCATIONS: &[(u8, &str)] = &[
     (0xb, "Gilmer Hall"),
     (0xc, "APMA Small Hall"),
     (0xd, "AFC"),
+    (0xe, "Thornton A120"),
 ];
 
 #[derive(Clone, Debug, Serialize, FromRow)]
